@@ -23,8 +23,7 @@ The full write-up (in French) is in [`report/report.pdf`](report/report.pdf).
 
 I built the **Shiny application** (`shiny_app/app.R`) on my own. The rest of the
 project (theory, estimators, simulations, report) was done as a team of four, and I
-followed and understood that work without writing most of it. The other team members
-are credited on the report.
+followed and understood that work without writing most of it.
 
 ## Repository layout
 
