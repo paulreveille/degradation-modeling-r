@@ -1,6 +1,6 @@
 # Stochastic modelling of degradation data (Wiener and Gamma processes)
 
-Team project from the second year of the engineering programme at Ensimag
+Team project from the first year of the engineering programme at Ensimag
 (Applied Mathematics, 2025), done in a team of four. The project studies how to
 model the degradation of a system over time with random processes, estimate their
 parameters from data, and predict when a failure threshold will be crossed.
