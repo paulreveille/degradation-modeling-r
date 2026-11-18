@@ -1,0 +1,126 @@
+```{r}
+##base de données semi-conducteurs 
+semi_cond_modifie <- read.csv2("../data/donnees_modifiees/Semicond_modifie.csv")  
+##base de données lasers
+lasers_modifie <- read.csv2("../data/donnees_modifiees/Laser_modifie.csv")
+```
+
+
+
+```{r} 
+#méthode maximum de vraisemblance de diego modifiée, ne fonctionne que pour des dates bien répartis : pas uniforme ni exponentielle si t_max est faible
+
+
+f_root <- function(a, S, Y, epsilon = 1e-10) {
+  # Limiter a * S à un minimum pour éviter les erreurs numériques
+  a_S <- a * S
+  a_S[a_S < epsilon] <- epsilon  # Empêcher que a_S devienne trop petit sinon on obtient des inf
+
+  # Calcul de la partie droite de l'équation
+  rhs <- sum(S) * log(sum(S) / sum(Y)) + sum(S * log(Y))
+  
+  # Calcul de la somme principale
+  f_value <- sum(S * (digamma(a_S) - log(a))) - rhs
+  
+  # Retourner la valeur calculée de f_root
+  return(f_value)
+}
+
+
+estimation_a_b_vraisemblance <- function(dataframe_formate){
+  t <- dataframe_formate[,1]
+  delta_t <- diff(t)                      # s_j
+  X <- as.matrix(dataframe_formate[, -1])  # trajectoires (colonnes)
+  
+  
+  Ymat <- apply(X, 2, diff)
+  
+  # Répéter s_j pour matcher Y (même dimension que Ymat)
+  Smat <- matrix(delta_t, nrow = nrow(Ymat), ncol = ncol(Ymat), byrow = TRUE)
+  
+  # Aplatir pour simplifier les sommes
+  Y <- as.vector(Ymat)
+  S <- as.vector(Smat)
+  
+  # Vérification de l'intervalle et ajustement si nécessaire
+  bounds <- aggrandir_intervale(S, Y, lower = 0.001, upper = 100)
+  lower <- bounds$lower
+  upper <- bounds$upper
+
+    
+    
+  a_hat <- uniroot(function(a) f_root(a, S, Y), lower=0.001, upper=100)$root
+  b_hat <- a_hat * (sum(S) / sum(Y))
+  return (list(a = a_hat, b = b_hat ))
+}
+
+
+
+# Fonction pour vérifier et ajuster l'intervalle
+aggrandir_intervale <- function(S, Y, lower, upper, max_iter = 50) {
+  # Calcul des valeurs initiales de la fonction aux bornes
+  lower_val <- f_root(lower, S, Y)
+  upper_val <- f_root(upper, S, Y)
+  
+  new_lower <- lower
+  new_upper <- upper
+  
+  #cat(" lower =", lower, ": ", lower_val, "\n")
+  #cat(" upper =", upper, ": ", upper_val, "\n") lignes de debug
+  
+  
+  # Si les valeurs ne sont pas de signes opposés, ajuster l'intervalle
+  iter <- 0
+  while (lower_val * upper_val > 0 && iter < max_iter) {
+    # Agrandir l'intervalle de manière exponentielle ou personnalisée
+    new_lower <- new_lower / 2
+    new_upper <- new_upper * 2
+    
+    # Recalcul des valeurs aux nouvelles bornes
+    lower_val <- f_root(new_lower, S, Y)
+    upper_val <- f_root(new_upper, S, Y)
+    
+    iter <- iter + 1
+  }
+  
+  # Si après max_iter l'intervalle n'est toujours pas validé, stop
+  if (iter == max_iter) {
+    stop("L'intervalle n'a pas convergé après ", max_iter, " itérations.")
+  }
+  
+  # Retourner les nouvelles bornes
+  return(list(lower = new_lower, upper = new_upper))}
+
+
+
+```
+
+
+
+```{r}
+#méthode des moments de diego modifiée
+estimation_a_b_moments <- function (dataframe_formate) {
+  dates_mesures = dataframe_formate[,1]
+  donnees_usure = dataframe_formate[,-1]
+  
+  ##calcul des delta
+  delta_X = apply(donnees_usure, 2, diff)
+  delta_t = diff(dates_mesures)
+  #calcul de l'espérance (moyenne empirique)
+  E <- sum(delta_X / delta_t) / length(delta_X)
+  V <- sum((delta_X - delta_t*E)^2 / delta_t) / length(delta_X)
+  b <- E /V
+  a <- E* b
+  return (list(a = a ,b = b))
+}
+
+```
+
+```{r}
+cat("Méthode des moments pour lasers, loi gamma : \n") 
+estimation_a_b_moments(lasers_modifie)
+cat("Méthode vraisemblance pour lasers, loi gamma : \n") 
+estimation_a_b_vraisemblance(lasers_modifie)
+
+```
+

@@ -1,0 +1,79 @@
+---
+title: "Shinyy"
+output: html_document
+date: "2025-12-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+##base de données semi-conducteurs 
+semi_cond <- read.csv2("../data/donnees_orignales/Semicond.csv")
+##représentation en échelle log-log de la dégradation en fonction du temps 
+abscisse <- log(semi_cond$t)
+
+plot(abscisse, log(semi_cond$V1),cex =.3, type = "o", pch = 19, las = 1, xlab = "log(temps en secondes )", ylab = "log(degradation)")
+nbt <- 5
+if (nbt > 1){
+      for (k in 2:(nbt)){
+        nom_col <- paste0("V",k)
+        lines(abscisse, log(semi_cond[[nom_col]]), cex =.3, type = "o", pch = 19, las = 1)
+      }
+    }
+```
+
+```{r}
+##chunk avec écriture propre de fonctions pour tracer les données : afin de pouvoir les utiliser dans d'autres fichiers 
+
+##tracé des données semi-conducteurs sans echelle log-log
+abscisse <- semi_cond$t 
+plot(abscisse, semi_cond$V1,cex =.3, type = "o", pch = 19, las = 1, xlab = "temps en secondes", ylab = "degradation")
+nbt <- 5
+if (nbt > 1){
+      for (k in 2:(nbt)){
+        nom_col <- paste0("V",k)
+        lines(abscisse, semi_cond[[nom_col]], cex =.3, type = "o", pch = 19, las = 1)
+      }
+    }
+```
+
+```{r cars}
+
+```
+
+## Including Plots
+
+```{r}
+```
+
+```{r}
+
+##tracé des lasers en normal (pas log-log)
+lasers <- read.csv2("../data/donnees_orignales/Laser.csv")
+head(lasers)
+abscisse <-lasers$t
+plot(abscisse, lasers$U1,cex =.3, type = "o", pch = 19, las = 1, xlab = "temps en secondes", ylab = "degradation")
+cols <- c("U2", "U3", "U4", "U5", "U6", "U7", "U8", "U9")
+
+# boucle sur les noms de colonnes
+for (col in cols) {
+  lines(abscisse, lasers[[col]], cex = .3, type = "o", pch = 19)
+}
+
+##pas de sens de le faire en échelle log-log car les données ne suivent pas une allure logarithmique
+
+```
+
+You can also embed plots, for example:
+
+\`\`\`{r}
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

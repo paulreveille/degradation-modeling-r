@@ -1,0 +1,105 @@
+
+```{r}
+install.packages("fitdistrplus")
+install.packages("SuppDists")
+install.packages("statmod")
+```
+
+
+
+```{r}
+##on regarde si les dates suivent une loi gaussienne inverse  
+
+rmarkdown::render("./simulation_wiener_v2.Rmd") #pour pouvoir extraire les données de temps 
+x0 <- 0          
+t_min <- 0       
+t_max <- 4000    
+n_mesures <- 1000 # nombre de points
+n_simulations <- 1500 # nombre de trajectoires simulées
+
+mu <- 0.002053867       
+sigma <- 0.01287347
+
+dates = dates <- gene_dates(t_min, t_max, n_mesures, "1")
+
+res <- generation_wiener(dates, mu, sigma, x0, n_simulations)
+
+x <- intersection_seuil(res$dataframe,5)
+```
+
+
+```{r}
+library(fitdistrplus)
+library(SuppDists)
+library(statmod)
+inv_gauss <- fitdist(x, "invGauss", start = list( nu = mean(x), lambda = sqrt(var(x))))
+##faire un histogramme pour vérifier que la loi suit bien une loi inverse gaussienne 
+hist(x, breaks = 30, probability = TRUE,
+     main = "Loi gaussienne inverse")
+curve(dinvgauss(x, mean = inv_gauss$estimate["nu"], shape = inv_gauss$estimate["lambda"]),
+      add = TRUE, col = "red", lwd = 2)
+
+qqplot(
+  qinvgauss(ppoints(length(x)), mean = inv_gauss$estimate["nu"], shape = inv_gauss$estimate["lambda"]),
+  sort(x),
+  main = "QQ-plot loi gaussienne inverse"
+) ##les points doivent suivre la courbe
+abline(0, 1, col = "red")
+
+##avec un nombre très élevé de simulations, on remarque que les temps suivent bien une loi gaussienne inverse : de même, plus le nombre de dates est élevé, plus les données suivent cette allure 
+```
+
+```{r}
+##densité pour la loi gamma : on crée une fonction pour générer la densité de la fonction qui est censée approcher la loi 
+rmarkdown::render("./simulation_gamma_v2.Rmd")
+
+
+##on colle les données de base 
+h = 20 #seuil choisi
+x0 <- 0          
+t_min <- 0       
+t_max <- 10000
+n_mesures <- 100 # nombre de points
+n_simulations <- 10 # nombre de trajectoires simulées
+a = 1
+b = 2
+
+dates = dates <- gene_dates(t_min, t_max, n_mesures, "1")
+
+gamma_data <- generation_gamma(dates, a, b, x0, n_simulations)
+dates_depassement_seuil <- intersection_seuil(gamma_data$dataframe, 20)
+
+hist(seuil, breaks = 30, probability = TRUE,
+     main = "Vérification loi gamma")
+
+
+
+
+
+
+# Fonction d'intégrande selon u
+integrande <- function(u, a, t) {
+  
+  
+  A_t <- a * t
+  
+  return((log(u) - digamma(A_t)) * u^(A_t - 1) * exp(-u))
+}
+
+# Fonction pour calculer la densité f_tau_h(t)
+densité_t <- function(t, a, h) {
+  A_t <- a * t
+  # Intégrale selon u de h à +Inf
+  integrale_resultat <- integrate(function(u) integrande(u, a, t), lower = h, upper = Inf)$value
+  # Calcul de la densité
+  f_tau <- (a / gamma(A_t)) * integrale_resultat
+  cat(f_tau)
+  return(f_tau)
+}
+
+
+#renvoie toujours des NaN abandon
+```
+
+
+

@@ -1,0 +1,138 @@
+---
+title: "maintenance"
+output: html_document
+date: "2025-12-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+rmarkdown::render("./simulation_wiener_v2.Rmd")
+x0 <- 0          
+t_min <- 0       
+t_max <- 4000    
+n_mesures <- 1000 # nombre de points
+
+
+n_simulations <- 150 # nombre de trajectoires simulées
+
+mu <- 0.002053867       
+sigma <- 0.01287347
+
+dates = dates <- gene_dates(t_min, t_max, n_mesures, "1")
+
+res <- simulation_wiener(dates, mu, sigma , x0)
+dates_maintenance <- c(1000, 3000)
+##fonction de maintenance wiener 
+maintenance_wiener <- function(t_min ,t_max, n_mesures, mu, wiener, dates_maintenance, cte_maintenance ){
+  res2 <-wiener 
+  for (date in dates_maintenance) {
+    nb_modif <- date * n_mesures / (t_max- t_min)
+    cte_2 = cte_maintenance
+    for (i in nb_modif: n_mesures) {
+      if (res[i] - cte_2 <= 0){
+        cte_2 = res2[i]
+        res2[i] = 0
+      }else {
+      res2 [i] = res2[i] - cte_2
+      }
+  }
+  plot(dates, wiener , type = "l", col = "lightblue4", xlab = "Temps en seconde", ylab = "Dégradation ", ) ##une simulation wiener : on va modifier 
+  lines(dates, res2, type = "l",col = "blue")
+  lines(dates, mu * dates, lty = 2, col = "orange")
+  for (date in dates_maintenance) {
+    abline(v = date, col = "red")
+  }
+  abline(h = valeur_seuil_def, col = "yellow2", lty = 2)
+  legend("topleft", legend = c("Wiener", "Wiener avec maintenance", "mu * t", "Dates de maintenance", "Seuil"), 
+       col = c("lightblue4", "blue", "orange", "red", "yellow2"), lwd = c(1,1), lty = c(1, 1, 2, 1, 2), cex = 0.8, box.lty = 0, bg = NA)
+  }
+  return (res2)
+}
+maintenance_wiener(t_min, t_max, n_mesures, mu, res, dates_maintenance = c(500,1000,1500,3000), cte_maintenance = 1)
+
+
+```
+
+```{r optimisation }
+##stratégie d'optimisation du coût de maintenance 
+#plusieurs méthodes de maintenance : maintenance corrective (on attend qu'un certain nombre d'appareils soient défaillants ou que la défaillance soit très élevée sur un certain nombre d'appareils pour intervenir)
+##maintenance périodique : on applique la mainteance tous les T temps par exemple 
+##on suppose que l'apparition d'un appareil défaillant côute nouvel_appareil prix 
+##et que la mainteance coûte maintenance prix 
+x0 <- 0          
+t_min <- 0       
+t_max <- 4000    
+n_mesures <- 1000 # nombre de points
+
+
+n_simulations <- 150 # nombre de trajectoires simulées
+
+mu <- 0.002053867       
+sigma <- 0.01287347
+
+
+nouvel_appareil <- 100
+maintenance <- 30
+##on cherche donc à optimiser les prix 
+##on va par exemple travailler sur les lasers avec wiener  
+##on va calculer le rapport prix / temps et chercher à l'optimiser 
+## premier estimateur : rapport moyen si on ne fait pas de maintenance : 
+##avec un seuil égal à 5 pour des simulations wiener 
+rapport <- function(seuil, prix_nouvel, prix_maintenance, nb_maintenance) {
+  total_prix <- prix_nouvel + nb_maintenance * prix_maintenance
+  r <- total_prix / mean(seuil)
+
+  cat(
+    "Prix par appareil :", total_prix,
+    "Temps moyen avant dépassement :", mean(seuil),
+    "Rapport :", r, "\n"
+  )
+
+  return(r)
+}
+valeur_seuil_def <- 5
+n_wiener <- generation_wiener(dates, mu, sigma, x0, n_simulations)
+#en moyenne prix/temps = 5 : on tente de réduire ce rapport 
+##exemple si on fait une seule maintenance : 
+##on prend la première trajectoire dans n_wiener
+comparaison_wiener <- function(dates, dates_maintenance, trajectoire, cte_maintenance) {
+  mainte <-maintenance_wiener(t_min, t_max, n_mesures, mu, wiener = traj_alea, dates_maintenance, cte_maintenance)
+  mainte <- cbind(dates, mainte)
+  trajectoire <- cbind(dates, mainte)
+  seuil_sans <- intersection_seuil(trajectoire, valeur_seuil_def)
+  r1 <- rapport(seuil_sans, nouvel_appareil, maintenance, 0)
+  seuil_maintenance <- intersection_seuil(mainte, valeur_seuil_def)
+  nb_main = 0
+  if (length(seuil_maintenance) == 0) {
+    cat("Trop peu de dates, la défaillance n'a pas été atteinte !  \n")
+    return (0)
+  }
+  for (i in seq_along(dates_maintenance)) {
+    if (dates_maintenance[i] <= seuil_maintenance[1]) {
+      nb_main = nb_main +1
+    }
+  }
+  r2 <- rapport(seuil_maintenance, nouvel_appareil, maintenance, nb_main)
+  return (r2 > r1)
+} 
+comparaison_wiener(n_wiener$dataframe[,1], c(500, 1500), n_wiener$dataframe[,2], cte_maintenance = 1.4)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

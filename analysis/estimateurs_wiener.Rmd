@@ -1,0 +1,124 @@
+```{r}
+##base de données semi-conducteurs 
+semi_cond_modifie <- read.csv2("../data/donnees_modifiees/Semicond_modifie.csv")  
+##base de données lasers
+lasers_modifie <- read.csv2("../data/donnees_modifiees/Laser_modifie.csv")
+
+
+```
+
+
+
+
+```{r}
+# Fonction pour estimer mu et sigma^2 par la méthode du maximum de vraisemblance
+estimation_mu_sigma_vraisemblance <- function(dataframe_formate) {
+  
+  # Extraire les dates et les trajectoires
+  dates <- dataframe_formate[, 1]  # Première colonne : dates
+  X <- as.matrix(dataframe_formate[, -1])  # Trajectoires (colonnes de X)
+  
+  m_mesures <- nrow(X)  # Nombre de points de mesure
+  n_simulations <- ncol(X)  # Nombre de simulations
+  
+  # Calculer les différences de temps (s_i,j)
+  delta_t <- diff(dates)
+  # Incréments pour chaque simulation (différences entre les observations successives)
+  Y <- apply(X, 2, diff)  # Y = X(t_j) - X(t_j-1) pour chaque trajectoire
+  somme_yij = 0
+  somme_t_ij =0
+  for (i in 1:n_simulations) {
+    
+    for (j in 1:(m_mesures-1)){
+      somme_yij = Y[j,i] + somme_yij
+      somme_t_ij = delta_t[j] + somme_t_ij
+       
+    
+    
+    }
+  }
+  
+  
+  
+  mu_hat = somme_yij/somme_t_ij
+  
+  sigma_chap_2_i = numeric(n_simulations)
+  
+  for (i in 1:n_simulations) {
+    
+    for (j in 1:(m_mesures-1)){
+       sigma_chap_2_i[i] = sigma_chap_2_i[i] + 1/m_mesures * ((Y[j,i] - mu_hat * delta_t[j])^2/ delta_t[j])
+    
+    
+    }
+  }
+  
+  
+  sigma2_hat = mean(sigma_chap_2_i)
+  
+ 
+  
+  # Retourner les estimations de mu et sigma
+  return(list(mu = mu_hat, sigma = sqrt(sigma2_hat)))
+}
+
+# Exemple d'appel avec un dataframe "lasers_modifie" formaté (date, mesures)
+resultat_semicond_vrai <- estimation_mu_sigma_vraisemblance(semi_cond_modifie)
+print(resultat_semicond_vrai)
+resultat_laser_vrai <- estimation_mu_sigma_vraisemblance(lasers_modifie)
+print(resultat_laser_vrai)
+
+```
+
+
+
+```{r}
+
+# Estimation de mu et sigma^2 par méthode des moments pour un processus de Wiener
+estimation_mu_sigma_moments <- function(dataframe_formate) {
+  # Extraire la grille temps et les trajectoires
+  t <- dataframe_formate[,1]  # Première colonne : dates
+  X <- as.matrix(dataframe_formate[, -1])  
+  m_mesures = nrow(X)
+  n_simulations = ncol(X)
+  # Calcul des différences de temps (s_i,j)
+  delta_t <- diff(t)  # Calcul des intervalles de temps
+  
+  # Incréments pour chaque simulation (différences entre les observations successives)
+  Y <- apply(X, 2, diff)  # Y = X(t_j) - X(t_j-1) pour chaque trajectoire
+  
+  mu_hat_i = numeric(n_simulations)
+  for (i in 1:n_simulations) {
+    mu_hat_i[i] = 1/m_mesures * sum(Y[,i]/ delta_t)
+    
+    
+  }
+  mu_hat = mean(mu_hat_i)
+  
+  sigma_chap_2_i = numeric(n_simulations)
+  for (i in 1:n_simulations) {
+    
+    for (j in 1:(m_mesures-1)){
+       sigma_chap_2_i[i] = sigma_chap_2_i[i] + 1/m_mesures * ((Y[j,i] - mu_hat_i[i] * delta_t[j])^2/ delta_t[j])
+    
+    
+    }
+  }
+  
+  sigma2_hat = mean(sigma_chap_2_i)
+  
+  return(list(mu = mu_hat, sigma = sqrt(sigma2_hat)))
+}
+
+# Exemple d'appel avec un dataframe "lasers_modifie" formaté (date, mesures)
+resultat_semicond_mom <- estimation_mu_sigma_moments(semi_cond_modifie)
+print(resultat_semicond_mom)
+resultat_lasers_mom <- estimation_mu_sigma_moments(lasers_modifie)
+print(resultat_lasers_mom)
+```
+
+
+
+
+
+

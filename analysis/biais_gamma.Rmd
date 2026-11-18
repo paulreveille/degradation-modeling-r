@@ -1,0 +1,92 @@
+```{r importation_fonctions}
+
+
+#Importation des fonctions utiles
+rmarkdown::render("./estimateurs_gamma.Rmd")
+rmarkdown::render("./simulation_gamma_v2.Rmd")
+
+```
+```{r}
+#vérification du biais des estimateurs par la méthode des moments pour le processus gamma, procédé empirique :
+n_simulations_estimations <- 100
+
+#paramétres à essayer
+
+t_min <- 0
+t_max <- 1000
+n_mesures <- 100
+dates <- gene_dates(t_min,t_max,n_mesures,"4")
+
+a <- 1 
+b <- 10    
+x0 <- 0
+n_simulations <- 10 #pour obtenir une meilleur approximation
+
+
+a_estimes = numeric(n_simulations_estimations)
+b_estimes = numeric(n_simulations_estimations)
+
+for (i in 1:n_simulations_estimations){
+  resultat = generation_gamma(dates, a,b,x0, n_simulations)
+  dataframe = resultat$dataframe
+  estimation = estimation_a_b_moments(dataframe)
+  
+  a_estimes[i] = estimation$a
+  b_estimes[i] = estimation$b
+  
+}
+
+a_chap = mean(a_estimes)
+b_chap = mean(b_estimes)
+a_chap
+b_chap
+
+cat("Par méthode des moments", "\n")
+cat("a choisi :",a, "; b choisi : ",b, "\n")
+cat("moyenne des estimations sur a : ", mean(a_estimes), "variance a estimés : ",var(a_estimes),"\n")
+cat("moyenne des estimations sur b : ", mean(b_estimes), "variance b estimés : ",var(b_estimes))
+
+```
+
+
+```{r}
+#vérification du biais des estimateurs par la méthode du maximum de vraisemblance pour le processus gamma, procédé empirique :
+n_simulations_estimations <- 100
+
+#paramétres à essayer
+
+t_min <- 0
+t_max <- 10000  
+n_mesures <- 100
+dates <- gene_dates(t_min,t_max,n_mesures,"1")
+
+a <- 1
+b <- 10    
+x0 <- 0
+n_simulations <- 10 #pour obtenir une meilleur approximation on fait grandir ce paramètre
+
+
+a_estimes = numeric(n_simulations_estimations)
+b_estimes = numeric(n_simulations_estimations)
+
+for (i in 1:n_simulations_estimations){
+
+  resultat = generation_gamma(dates, a,b,x0, n_mesures)
+  dataframe = resultat$dataframe
+  estimation = estimation_a_b_vraisemblance(dataframe)
+  
+  a_estimes[i] = estimation$a
+  b_estimes[i] = estimation$b
+}
+
+cat("Par maximum de vraisemblance", "\n")
+cat("a choisi :",a, "; b choisi : ",b, "\n")
+cat("moyenne des estimations sur a : ", mean(a_estimes), "variance a estimés : ",var(a_estimes),"\n")
+cat("moyenne des estimations sur b : ", mean(b_estimes), "variance b estimés : ",var(b_estimes))
+```
+
+
+
+
+
+

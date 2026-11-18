@@ -1,0 +1,416 @@
+```{r donnees}
+
+##base de données semi-conducteurs 
+semi_cond_modifie <- read.csv2("../data/donnees_modifiees/Semicond_modifie.csv")  
+##base de données lasers
+lasers_modifie <- read.csv2("../data/donnees_modifiees/Laser_modifie.csv")
+```
+
+
+
+
+```{r dates }
+
+
+gene_exp <- function(t_min, t_max, nb) {
+  ###fonction de génération des dates par loi exponentielle 
+  #vérifie qu'elles sont bien dans l'intervalle demandé 
+  #paramètres : t_min: borne inf : t_max : borne sup : nb nombre de valeurs 
+  lambda <- 2 / (t_max - t_min)
+  dates_exp <- c(t_min)
+  for (i in 2 : (nb-1)) {
+    val = -1
+    while (val < t_min || val > t_max) {
+      val <- rexp(1, rate = lambda)
+    }
+    dates_exp[i] <- val 
+  }
+  dates_exp[nb] <- t_max
+  dates_exp<- sort(dates_exp)
+  return (dates_exp)
+}
+
+#fonction de génération de dates de mesures
+gene_dates <- function (t_min, t_max, nb_mesures, input) { ##fonction de génération de dates 
+  ##paramètres : t-min: borne inférieure pour le temps 
+  ##t-max : borne supérieure pour le temps ( temps max atteignable)
+  ##nb : nombre de dates à générer 
+  
+  ##retourne 1 vecteur parmis ces 4 : 
+  #premier vecteur : dates avec un pas constant
+  ##deuxième vecteur : nombre de dates générées aléatoirement et triées dans l'odre croissant 
+  ###troisième vecteur : générées avec une loi uniforme
+  ####quatrième : générées avec loi exponentielle
+  if (input == "1") {
+    dates <- seq(from = t_min, to = t_max, length.out = nb_mesures)
+  }
+  else if (input == "2") {
+    dates <- c(t_min, sort(sample(1:(t_max-1), nb_mesures-2, replace = FALSE)), t_max)
+  }
+  else if (input == "3"){
+    dates <- c(t_min, sort(runif(nb_mesures-2, min = t_min, max = t_max )), t_max)
+  }
+  else if (input == "4") {
+    dates <- gene_exp(t_min, t_max, nb_mesures)
+  }
+  return (dates)
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r simulation}
+#Fonction de simulation d'un processus de Wiener
+
+#simulation d'un procédé
+simulation_wiener <- function(dates, mu, sigma, x0) {
+  n <- length(dates)
+  delta_t <- diff(dates)
+  X <- numeric(n)
+  X[1] <- x0
+  
+  for (i in 2:n) {
+    incr <- rnorm(1, mean = mu * delta_t[i-1], sd = sigma * sqrt(delta_t[i-1]))
+    X[i] <- X[i-1] + incr
+  }
+  return(X)
+}
+
+
+
+
+
+# Simulation de n_simulations procédés de Wiener
+generation_wiener <- function(dates, mu, sigma, x0, n_simulations) {
+  # Matrice des trajectoires
+  trajectoires <- matrix(0, nrow = n_simulations, ncol = length(dates))
+  for (sim in 1:n_simulations) {
+    trajectoires[sim, ] <- simulation_wiener(dates, mu, sigma, x0)
+  }
+  
+  # Construction du data.frame
+  df <- data.frame(Date = dates, t(trajectoires))
+  
+  # Noms des colonnes (Simulation_1, Simulation_2, ...)
+  colnames(df) <- c("Date", paste0("Simulation_", 1:n_simulations))
+  
+  # Retourner les deux objets
+  return(list(
+    trajectoires = t(trajectoires),
+    dataframe = df
+  ))
+}
+
+
+
+
+
+
+```
+
+```{r calcul}
+# Simulation 
+
+# Paramètres
+x0 <- 0          
+t_min <- 0       
+t_max <- 40000    
+n_mesures <- 36 # nombre de points
+
+
+n_simulations <- 15 # nombre de trajectoires simulées
+
+mu <- 0.000383      
+sigma <-  0.02104858
+
+dates = dates <- gene_dates(t_min, t_max, n_mesures, "4")
+
+res <- generation_wiener(dates, mu, sigma, x0, n_simulations)
+
+trajectoires = res$trajectoires
+# Accéder à la matrice
+#res$trajectoires[1, 1:10]
+
+# Accéder au data.frame
+#head(res$dataframe)
+
+
+
+
+
+#par(mfrow = c(1,2)) pour l'échelle log
+
+# Trajectoires classiques
+matplot(dates, trajectoires, 
+
+       type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+        col = rainbow(n_simulations),
+        #col = "black",
+        main = "Processus de Wiener avec dérive linéaire",
+        xlab = "Temps", ylab = "X(t)")
+
+
+
+```
+
+```{r approximation }
+#===========================
+#Simulation et approximation
+#===========================
+
+
+# Paramètres
+x0 <- 0          
+t_min <- 0       
+t_max <- 100   
+n_mesures <- 50 # nombre de points
+
+dates <- gene_dates(t_min, t_max, n_mesures, "1")
+n_simulations <- 2# nombre de trajectoires simulées
+
+mu <- 2     
+sigma <-  3
+
+
+
+res <- generation_wiener(dates, mu, sigma, x0, n_simulations)
+
+# Simulation
+matplot(dates, res$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "blue",
+        main="Processus Wiener simulé et estimé",
+        xlab="Temps", ylab="X(t)")
+
+#Approximation
+
+
+dataframe_formate <- res$dataframe
+#importation des fonctions d'estimations
+
+rmarkdown::render("./estimateurs_wiener.Rmd")
+
+
+#estimation par la méthode du maximum de vraisemblance
+parametres_estimes_vraisemblance = estimation_mu_sigma_vraisemblance(dataframe_formate)
+resultat_estime_vraisemblance = generation_wiener(dates, parametres_estimes_vraisemblance$mu, parametres_estimes_vraisemblance$sigma, x0, n_simulations)
+
+
+# Simulation vraisemblance
+par(new = TRUE) #on superpose les deux matplot
+
+matplot(dates, resultat_estime_vraisemblance$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "red3",
+       xlab="", ylab="",
+       axes = FALSE
+        
+        )
+
+
+
+#estimation par la méthode des moments
+
+parametres_estimes_moments = estimation_mu_sigma_moments(dataframe_formate)
+resultat_estime_moments = generation_wiener(dates, parametres_estimes_moments$mu, parametres_estimes_moments$sigma, x0, n_simulations)
+
+
+# Simulation moments
+par(new = TRUE) #on superpose les trois matplot
+
+matplot(dates, resultat_estime_moments$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "green4",
+       xlab="", ylab="",
+       axes = FALSE
+      )
+
+legend("topleft", legend = c("Simulations", "Estimation Vraisemblance", "Estimation Moments"), 
+       col = c("blue", "red3", "green4"), pch = 19, lty = 1, cex = 0.8, box.lty = 0)
+
+
+```
+
+
+
+
+```{r seuil }
+## Vérification distribution des dates de défaillance en fonction du seuil
+
+intersection_seuil <- function(df,h){
+  nl <- length(df[,1])
+  nc <- length(df[1,])
+  ech <- c()
+  for (i in 2:nc){
+    j <- 1
+    while (j < nl){
+      if (df[j,i] < h){
+        j <- j + 1
+      }else{
+        ech <- c(ech,df[j,1])
+        break
+      }
+    }
+  }
+  return(ech)
+}
+
+intersection_seuil(res$dataframe,5)
+
+```
+
+
+```{r semi_cond}
+#Simulation avec les données semicond
+x0 <- 0
+dates <- semi_cond_modifie[,1]
+donnees_usure <- semi_cond_modifie[,-1]
+n_simulations <- ncol(donnees_usure)
+
+trajectoires_originelles = as.matrix(donnees_usure)
+
+matplot(dates, trajectoires_originelles, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "blue",
+       xlab="Temps", ylab="X(t)",
+       main = "Processus Wiener simulé et estimé"
+        
+        )
+
+
+rmarkdown::render("./estimateurs_wiener.Rmd")
+
+
+#estimation par la méthode du maximum de vraisemblance
+parametres_estimes_vraisemblance = estimation_mu_sigma_vraisemblance(semi_cond_modifie)
+resultat_estime_vraisemblance = generation_wiener(dates, parametres_estimes_vraisemblance$mu, parametres_estimes_vraisemblance$sigma, x0, n_simulations)
+
+
+# Simulation vraisemblance
+par(new = TRUE) #on superpose les deux matplot
+
+matplot(dates, resultat_estime_vraisemblance$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "red3",
+       xlab="", ylab="",
+       axes = FALSE
+        
+        )
+
+
+
+#estimation par la méthode des moments
+
+parametres_estimes_moments = estimation_mu_sigma_moments(semi_cond_modifie)
+resultat_estime_moments = generation_wiener(dates, parametres_estimes_moments$mu, parametres_estimes_moments$sigma, x0, n_simulations)
+
+
+# Simulation moments
+par(new = TRUE) #on superpose les trois matplot
+
+matplot(dates, resultat_estime_moments$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "green4",
+       xlab="", ylab="",
+       axes = FALSE
+      )
+
+grid()
+
+legend("topleft", legend = c("Données réelles", "Simulation méthode vraisemblance", "Simulation méthode moments"), 
+       col = c("blue", "red3", "green4"), pch = 19, lty = 1, cex = 0.8, box.lty = 0)
+
+```
+
+
+
+```{r}
+
+#Simulation avec les données lasers
+x0 <- 0
+dates <- lasers_modifie[,1]
+donnees_usure <- lasers_modifie[,-1]
+n_simulations <- ncol(donnees_usure)
+
+trajectoires_originelles = as.matrix(donnees_usure)
+
+matplot(dates, trajectoires_originelles, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "blue",
+       xlab="Temps", ylab="X(t)",
+       main = "Processus Wiener simulé et estimé"
+        
+        )
+
+
+rmarkdown::render("./estimateurs_wiener.Rmd")
+
+
+#estimation par la méthode du maximum de vraisemblance
+parametres_estimes_vraisemblance = estimation_mu_sigma_vraisemblance(lasers_modifie)
+resultat_estime_vraisemblance = generation_wiener(dates, parametres_estimes_vraisemblance$mu, parametres_estimes_vraisemblance$sigma, x0, n_simulations)
+
+
+# Simulation vraisemblance
+par(new = TRUE) #on superpose les deux matplot
+
+matplot(dates, resultat_estime_vraisemblance$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "red3",
+       xlab="", ylab="",
+       axes = FALSE
+        
+        )
+
+
+
+#estimation par la méthode des moments
+
+parametres_estimes_moments = estimation_mu_sigma_moments(lasers_modifie)
+resultat_estime_moments = generation_wiener(dates, parametres_estimes_moments$mu, parametres_estimes_moments$sigma, x0, n_simulations)
+
+
+# Simulation moments
+par(new = TRUE) #on superpose les trois matplot
+
+matplot(dates, resultat_estime_moments$trajectoires, 
+        type = "o",pch = 19, las = 1,cex = 0.2,
+        lty = 1, lwd = 1.5,
+       # col=rainbow(n_simulations),
+       col = "green4",
+       xlab="", ylab="",
+       axes = FALSE
+      )
+
+grid()
+
+legend("topleft", legend = c("Données réelles", "Simulation méthode vraisemblance", "Simulation méthode moments"), 
+       col = c("blue", "red3", "green4"), pch = 19, lty = 1, cex = 0.8, box.lty = 0)
+
+```
+

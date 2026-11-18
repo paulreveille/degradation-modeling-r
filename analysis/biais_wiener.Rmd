@@ -1,0 +1,85 @@
+```{r importation_fonctions}
+
+
+#Importation des fonctions utiles
+rmarkdown::render("./estimateurs_wiener.Rmd")
+rmarkdown::render("./simulation_wiener_v2.Rmd")
+
+```
+
+```{r}
+#vérification du biais des estimateurs par la méthode des moments pour le processus de wiener, procédé empirique :
+n_simulations_estimations <- 100
+
+#paramétres à essayer
+
+t_min <- 0
+t_max <- 1000
+n_mesures <- 100
+dates <- gene_dates(t_min,t_max,n_mesures,"1")
+
+mu <- 2 
+sigma <- 1    
+x0 <- 0
+n_simulations <- 10 #pour obtenir une meilleur approximation
+
+
+mu_estimes = numeric(n_simulations_estimations)
+sigma_estimes = numeric(n_simulations_estimations)
+
+for (i in 1:n_simulations_estimations){
+  resultat = generation_wiener(dates, mu,sigma,x0, n_simulations)
+  dataframe = resultat$dataframe
+  estimation = estimation_mu_sigma_moments(dataframe)
+  
+  mu_estimes[i] = estimation$mu
+  sigma_estimes[i] = estimation$sigma
+  
+  
+}
+cat("Par méthode des moments", "\n")
+cat("mu choisi :",mu, "; sigma choisi : ",sigma, "\n")
+cat("moyenne des estimations sur mu : ", mean(mu_estimes), "variance mu estimés : ",var(mu_estimes),"\n")
+cat("moyenne des estimations sur sigma : ", mean(sigma_estimes), "variance sigma estimés : ",var(sigma_estimes))
+```
+
+
+```{r}
+#vérification du biais des estimateurs par la méthode du maximum de vraisemblance pour le processus de wiener, procédé empirique :
+n_simulations_estimations <- 100
+
+#paramétres à essayer
+
+t_min <- 0
+t_max <- 1000
+n_mesures <- 100
+dates <- gene_dates(t_min,t_max,n_mesures,"1")
+
+mu <- 2
+sigma <- 1   
+x0 <- 0
+n_simulations <- 10 #pour obtenir une meilleur approximation
+
+
+mu_estimes = numeric(n_simulations_estimations)
+sigma_estimes = numeric(n_simulations_estimations)
+
+for (i in 1:n_simulations_estimations){
+
+  resultat = generation_wiener(dates, mu,sigma,x0, n_mesures)
+  dataframe = resultat$dataframe
+  estimation = estimation_mu_sigma_vraisemblance(dataframe)
+  
+  mu_estimes[i] = estimation$mu
+  sigma_estimes[i] = estimation$sigma
+  estimation$mu
+  estimation$sigma
+}
+cat("Par maximum de vraisemblance", "\n")
+cat("mu choisi :",mu, "; sigma choisi : ",sigma, "\n")
+cat("moyenne des estimations sur mu : ", mean(mu_estimes), "variance mu estimés : ",var(mu_estimes),"\n")
+cat("moyenne des estimations sur sigma : ", mean(sigma_estimes), "variance sigma estimés : ",var(sigma_estimes))
+
+```
+
+

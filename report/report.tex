@@ -1,0 +1,465 @@
+%----------------------------------------------------------------------------------------------------------
+% 	The following Latex code is given as an example and not The example
+%	of using Latex to write report, memoir or thesis. 
+%
+%	Please visit the wikibook : https://fr.wikibooks.org/wiki/LaTeX
+% 
+%----------------------------------------------------------------------------------------------------------
+
+\documentclass[11pt,a4paper]{article}
+
+% package
+%symbole math de l'American Mathematical Society (AMS)
+\usepackage{amsfonts,amssymb,amsmath,amsthm}
+%utiliser les regles de typographie francaise
+\usepackage[french]{babel}
+% accents 
+%\usepackage[applemac]{inputenc} %MAC encoding
+\usepackage[utf8]{inputenc} %UNIX encoding
+%\usepackage[ansinew]{inputenc} %WINDOWS encoding
+
+%graphique
+\usepackage{color, graphicx, wrapfig, subcaption}
+
+%citation
+\usepackage{natbib}
+
+%reference hypertext
+\usepackage[pagebackref=false, hyperfootnotes=false]{hyperref}
+
+%pour les url
+\usepackage{url}
+\urlstyle{sf}
+
+%plusieur colonne dans tableau
+% \multicolumn{nomb_col}{alignement}{contenu}
+% \multirow{nomb_ligne}{largeur}{contenu}
+\usepackage{multirow, multicol}
+
+
+% layout
+\usepackage[left=2cm, right=2cm, top=2.5cm, bottom=2.5cm]{geometry}
+
+% Intervalle d'entiers
+\usepackage{stmaryrd}
+
+% Sous-graphiques
+\usepackage{subcaption}
+
+% les macros generales - exemples
+
+%layout
+\newcommand{\HRuleTop}{\noindent\rule{\linewidth}{.5pt}}
+\newcommand{\HRuleBottom}{\rule{\linewidth}{.5pt}}
+\newcommand{\ligne}{\rule[2mm]{.3\textwidth}{0,5mm}\\}
+\newcommand{\myskip}{\vspace{\parskip}}
+\newcommand{\blank}{ \clearpage{\pagestyle{empty}\cleardoublepage} }
+
+%sets
+\newcommand{\R}{\mathbb R}
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\X}{\mathbb X}
+\newcommand{\C}{\mathbb C}
+\newcommand{\K}{\mathbb K}
+
+\newcommand{\calN}{\mathcal N}
+\newcommand{\calM}{\mathcal M}
+\newcommand{\calA}{\mathcal A}
+\newcommand{\calB}{\mathcal B}
+\newcommand{\calE}{\mathcal E}
+\newcommand{\calF}{\mathcal F}
+\newcommand{\calL}{\mathcal L}
+\newcommand{\calG}{\mathcal G}
+\newcommand{\calP}{\mathcal P}
+\newcommand{\calS}{\mathcal S}
+\newcommand{\calU}{\mathcal U}
+\newcommand{\barA}{\overline A}
+\newcommand{\barV}{\overline V}
+
+\newcommand{\bA}{\boldsymbol{A}}
+\newcommand{\bB}{\boldsymbol{B}}
+\newcommand{\bC}{\boldsymbol{C}}
+\newcommand{\bD}{\boldsymbol{D}}
+\newcommand{\bH}{\boldsymbol{H}}
+\newcommand{\bL}{\boldsymbol{L}}
+\newcommand{\bM}{\boldsymbol{M}}
+\newcommand{\bN}{\boldsymbol{N}}
+\newcommand{\bP}{\boldsymbol{P}}
+\newcommand{\bQ}{\boldsymbol{Q}}
+\newcommand{\bR}{\boldsymbol{R}}
+\newcommand{\bT}{\boldsymbol{T}}
+\newcommand{\bU}{\boldsymbol{U}}
+\newcommand{\bX}{\boldsymbol{X}}
+
+\newcommand{\bzero}{\boldsymbol{0}}
+\newcommand{\be}{\boldsymbol{e}}
+\newcommand{\bff}{\boldsymbol{f}}
+\newcommand{\bI}{\boldsymbol{I}}
+\newcommand{\bx}{\boldsymbol{x}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bz}{\boldsymbol{z}}
+\newcommand{\bt}{\boldsymbol{t}}
+
+
+%text style
+\newcommand{\pkg}{\textbf}
+\newcommand{\sigle}{\textsc}
+\newcommand{\code}{\texttt}
+\newcommand{\soft}{\textsf}
+\newcommand{\expo}{\textsuperscript}
+
+%_____________ avec couleur _____________ 
+\newcommand{\cyan}[1]{{\color{cyan}#1}}
+\newcommand{\red}[1]{{\color{red}#1}}
+\newcommand{\blue}[1]{{\color{blue}#1}}
+
+
+
+%math operator
+\newcommand{\abs}[1]{\left\lvert#1\right\overt}
+\newcommand{\bigo}[1]{\mathcal O \hskip -0,2em \left(#1\right)}
+\DeclareMathOperator{\Ker}{Ker}
+\newcommand{\littleo}[1]{o\hskip -0,2em \left(#1\right)}
+\DeclareMathOperator{\mat}{mat}
+\DeclareMathOperator{\rg}{rg}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\Sp}{Sp}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\vect}{vect}
+
+
+\title{Modélisation aléatoire et analyse statistique des données de dégradation}
+\author{ALBERT Francisco \and HÉCART Albert \and RÉVEILLE Paul \and RUIZ--DORMET Diego}
+ 
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+Pour de nombreux systèmes industriels, anticiper les défaillances est devenu essentiel afin d’éviter des pannes coûteuses et potentiellement catastrophiques. Les infrastructures modernes sont désormais équipées de capteurs permettant de surveiller en continu divers indicateurs de fonctionnement et de dégradation. L’analyse de ces signaux offre une information bien plus riche que la simple observation de temps de défaillance, et permet de mettre en place des stratégies de maintenance préventive plus efficaces.
+
+Dès lors, l'observation et l'analyse de ces données a permis d'établir des modèles qui semblent être adaptés aux observations : des processus stochastiques évoluant dans le temps. C'est exactement le travail de \cite{KMP} et \cite{XIE}: ils se sont intéressés aux dynamiques de cette détérioration, plutôt qu'à la simple durée de vie; qui vont par la suite estimer le moment où le processus franchira un seuil critique correspondant à une défaillance.
+
+Pour ce faire, ils ont étudié la pertinence de deux modèles de processus stochastiques : d'une part, les processus de Wiener (ou mouvement brownien avec dérive), qui modélise la dégradation comme une accumulation additive ayant une variabilité normale, dépendant de l'instant de la dégradation, qui serait plus adapté lorsque les incréments peuvent être positifs ou négatifs, même si la tendance est toujours croissante. De l'autre, les processus Gamma modélisent la dégradation comme un phénomène strictement croissant, permettant de modéliser quant à lui des phénomènes irréversibles.
+
+Ainsi, dans le cadre de ce projet, nous nous sommes intéressés à étudier cette modélisation, avec des paramètres estimés grâce à deux jeux de données (\textit{Lasers.csv} et \textit{Semicond.csv}) correspondant aux données de dégradation de lasers et de semi-conducteurs. Grâce à cela, nous avons estimé, avec un seuil préalablement fixé; la date de défaillance future de ces systèmes, avant de nous intéresser à la modélisation des maintenances imparfaites entre autres; tout cela par le biais d'une application Shiny conçue à cet effet.
+
+
+
+\section{Rappel des modèles Wiener et Gamma} \label{rappels}
+Nous commencerons ce rapport par un rappel de ce que sont des processus stochastiques, avant d'approfondir sur ceux qui sont utilisés dans ce modèle.
+On appelle \textit{processus stochastique} une famille de variables aléatoires $\{X_t\}_{t \in T}$ définies sur $(\Omega, \mathcal{T}, \mathbb{P})$ telles que:
+\begin{enumerate}
+	\item $t$ appartient à un ensemble indexé $T$ (ici le temps);
+	\item  $\forall t \in T, X_t$ est une variable aléatoire;
+	\item $\{X_t\}_{t \in T}$ décrit une trajectoire possible du système.
+\end{enumerate}
+Autrement dit, un processus stochastique associe à chaque instant $t$ une valeur aléatoire, et l’ensemble de ces valeurs décrit la dynamique probabiliste d’un phénomène.
+
+\subsection{Processus de Wiener} \label{rappels:wiener}
+Pour définir les processus de Wiener, il est essentiel de définir avant les mouvements Browniens.
+$(B_t)_{t \geq 0}$ est appelé un \textit{mouvement Brownien} si et seulement si :
+\begin{enumerate}
+	\item $B_0 = 0$ presque sûrement;
+	\item $B$ a des accroissements stationnaires : $\forall t,s,h>0, B_t-B_s \sim B_{t+h}-B_{s+h}$;
+	\item les accroissements de $B$ sont indépendants : $\forall n \geq 1, \forall t_1< \dots < t_n$, $B_{t_1},B_{t_2}-B_{t_1}, \dots, B_{t_n}-B_{t_{n-1}}$ sont mutuellement indépendantes;
+	\item $\forall t>0, B_t \sim \mathcal{N}(0,t)$.
+\end{enumerate}
+Le processus stochastique $W=(W_t)_{t \geq 0}$ est appelé \textit{processus de Wiener}, si c'est un mouvement Brownien avec dérive, autrement dit : $$ \forall t \geq 0, W_t = \mu t + \sigma B_t,
+$$ avec $\mu \in \mathbb{R}$ (\textit{paramètre de tendance}), $\sigma^2 > 0$ (\textit{paramètre de variabilité}) et  $(B_t)_{t \geq 0}$ un mouvement Brownien.
+
+\subsection{Processus Gamma} \label{rappels:gamma}
+Puisque la loi de distribution Gamma a été définie en cours de \textit{Probabilités et Statistiques 1}, on peut directement définir ces processus.
+
+Soit $A: \mathbb{R}^{+} \longrightarrow \mathbb{R}^{+}$ une fonction non décroissante et continue à droite telle que $A(0)=0$. Soit $b>0$. Soit $(X_t)_{t \geq 0}$ un processus stochastique continu à droite et ayant des limites à gauche.
+
+On dit que $(X_t)_{t \geq 0}$ est \textit{un processus gamma non homogène} de \textit{paramètre de forme} $a$ et de \textit{paramètre de taux} $b$ ($\mathcal{G}(A(t),b)$) si :
+\begin{enumerate}
+	\item $X_0=0$ presque sûrement;
+	\item les accroissements de $(X_t)_{t \geq 0}$ sont indépendants : $\forall n \in \mathbb{N}^{*}, \forall (t_1, \dots, t_{n+1}) \in \mathbb{R}^{n+1}$ tels que $0 \leq t_1<t_2<\dots<t_{n+1}$, les $X_{t_{i+1}}-X_{t_i}$ avec $1 \leq i \leq n$ sont indépendants;
+	\item $\forall (s,t) \in \mathbb{R}^2$ tel que $0<s<t$, les variables aléatoires $X_t-X_s$ suivent une loi gamma $\mathcal{G}(A(t)-A(s),b)$.
+\end{enumerate}
+Si $\forall t \geq 0, A(t)=at$ où $a>0$, alors $X_t-X_s \sim \mathcal{G}(a(t-s),b)$ et on dit que $(X_t)_{t \geq 0}$ est un \textit{processus gamma homogène} de paramètres $(a,b)$. 
+
+
+\section{Estimateurs des paramètres} \label{estimateurs}
+Les méthodes vues en cours de \textit{Probabilités et Statistiques 1}: la méthode par maximum de vraisemblance et la méthode des moments; nous permettent d'obtenir ces estimateurs.
+\subsection{Processus de Wiener} \label{estimateurs:wiener}
+\subsubsection{Méthode par maximum de vraisemblance} \label{estimateurs:wiener:vraisemblance}
+On considère que nos mesures de temps commencent à $t = 0$ (sinon, il suffit de translater les courbes en soustrayant l'origine temporelle). On note :
+\begin{itemize}
+	\item $X_{t_{i,j}}$ la variable aléatoire donnant la valeur de la dégradation $i$ au $j$-ième instant, noté $t_{i,j}$;
+	\item $s_{i,j} = \Delta t_{i,j} = t_{i,j}-t_{i,j-1}$ les écarts temporels;
+	\item $Y_{i,j} = X_{t_{i,j}}-X_{t_{i,j-1}}$ les accroissements de $X_i$;
+	\item $x_0$ la dégradation initiale ;
+	\item $n$ le nombre total de dégradations étudiées ;
+	\item $m$ le nombre total de mesures pour le suivi d'une même dégradation.
+\end{itemize}
+D'après le modèle de Wiener, on a : $$
+\forall i \in \{1, \dots, n \}, X_{i,1} \sim \mathcal{N}(x_0 + \mu t_{i,1}, \sigma^2 t_{i,1}), \qquad
+\forall i \in \{1, \dots, n \}, \forall j \in \{1, \dots, m\}, Y_{i,j} \sim \mathcal{N}(x_0 + \mu s_{i,j}, \sigma^2 t_{i,j}),
+$$
+avec $\phi$ la fonction de répartition d'une loi normale $\mathcal{N}(0,1)$.
+
+Comme pour tout $i$ et $j$, ces variables aléatoires sont indépendantes, la fonction de vraisemblance devient le produit des densités d'où : $$
+L(x_0, t_0, \mu, \sigma^2 | Obs) = \prod_{i=1}^{n} \frac{1}{\sqrt{\sigma^2 t_{i,1}}}\phi (\frac{x_{i,1}-x_0-\mu t_{i,1}}{\sqrt{\sigma ^2 t_{i,1}}}) \times \prod_{i = 1}^{n} \prod_{j = 2}^{m} \frac{1}{\sqrt{\sigma^2 s_{i,j}}}\phi (\frac{y_{i,j}-\mu s_{i,j}}{\sqrt{\sigma ^2 s_{i,j}}}).
+$$
+En utilisant la condition d'existence d'un maximum (dérivées partielles nulles, on obtient) :
+$$
+\hat{\mu} = \frac{\bar{x}_m-\bar{x}_1}{\bar{t}_m-t_1}, \qquad
+\hat{\sigma}^ 2 = \frac{1}{m(n-1)}(\sum_{i=1}^{n} \sum_{j=2}^{m} \frac{y_{i,j}^2}{s_{i,j}}-n \frac{(\hat{x}_m-\bar{x}_1)^2}{\bar{t}_m-t_1}).
+$$
+Dans le cas simple où $x_0 = 0$, les estimateurs deviennent :
+$$
+\hat{\mu}= \frac{\sum_{i=1}^{n} \sum_{j=1}^{m} y_{i,j}}{\sum_{i=1}^{n} \sum_{j=1}^{m} s_{i,j}}, \qquad
+\hat{\sigma}^2= \frac{1}{nm} \sum_{i=1}^{n} \sum_{j=1}^{m} \frac{(y_{i,j}-\hat{\mu}s_{i,j})^2}{s_{i,j}}.
+$$
+
+\subsubsection{Méthode des moments} \label{estimateurs:wiener:moments}
+On ne s'intéressera ici que au cas où $x_0 = 0$.
+
+D'après notre modèle, on a pour le processus $i$, par linéarité de l'espérance et en sachant que l'espérance de $B_t $ est nulle :$$
+\forall j \in \llbracket 0, m \rrbracket, \quad \mathbb{E}(\Delta X_{i,j}) = \mu_i \Delta t_{i,j}
+$$
+Grâce à l'estimateur de l'espérance : $$
+\hat{\mu}_i = \frac{1}{m}\sum_{j=1}^{m}\frac{\Delta x_{i,j}}{\Delta t_{i,j}}.
+$$
+Cet estimateur est de biais nul, puisque l'espérance du rapport à l'intérieur de la somme est égale à $\mu$, donc on obtient un biais nul par linéarité de l'espérance.
+
+De même, on obtient, pour $\sigma^2$: $$
+\forall j \in \llbracket 0, m \rrbracket, \quad \mathbb{V}(\Delta X_{i,j}) = \sigma_i^2 \Delta t_{i,j}.
+$$
+Par indépendance des $\Delta X_{i,j}$ :
+$$
+\hat{\sigma}_i^2 = \frac{1}{m} \sum_{j = 1}^{m} \frac{(\Delta x_{i,j} - \hat{\mu}_i \Delta t_{i,j})^2}{\Delta t_{i,j}}.
+$$
+On fait ensuite la moyenne des $\hat{\mu}_i$ et les $\hat{\sigma}_i$ sur les différentes données de dégradation, ce qui nous donne : $$
+\hat{\mu} = \frac{1}{n}\sum_{i=1}^{n} \hat{\mu}_i, \qquad \hat{\sigma}^2 = \frac{1}{n}\sum_{i=1}^{n} \hat{\sigma}_i^2.
+$$
+
+
+\subsection{Processus Gamma} \label{estimateurs:gamma}
+\subsubsection{Méthode par maximum de vraisemblance} \label{estimateurs:gamma:vraisemblance}
+Par les mêmes arguments que pour le processus de Wiener, la log-vraisemblance peut être calculée aisément, et nous donne : $$
+\begin{aligned}
+	\ell_1(a,b)
+	&= \sum_{i=1}^{n}\Bigl(
+	a t_{i,1}\log b - \log \Gamma(a t_{i,1}) + a t_{i,1} - 1
+	\Bigr)\log\bigl(X_{i,1})-bx_{i,1}\bigr) \\
+	&\quad + \sum_{i=1}^{n}\sum_{j=2}^{m}\Bigl(
+	a\Delta t_{i,j}\log b - \log \Gamma(a\Delta t_{i,j})
+	+ (a\Delta t_{i,j}-1)\log \Delta x_{i,j}
+	- b\Delta x_{i,j}
+	\Bigr)
+\end{aligned}
+$$
+
+En cherchant les points où la dérivée de cette fonction s'annule, on obtient des expressions de permettant d'estimer $a$ numériquement, puis en déduire $b$ : $$
+\sum_{i=1}^{n} \sum_{j=1}^{m} \Delta t_{i,j} (\psi_0(\hat{a}\Delta t_{i,j})-\log \hat{a}) = \sum_{i=1}^{n} \sum_{j=1}^{m} \Delta t_{i,j} \log \Bigl( \frac{\sum_{i=1}^{n} \sum_{j=1}^{m} \Delta t_{i,j}}{\sum_{i=1}^{n}\sum_{j=1}^{m}\Delta x_{i,j}} \Bigr)+\sum_{i=1}^{n}\sum_{j=1}^{m} \Delta t_{i,j} \log \Delta x_{i,j}
+$$
+$$
+\hat b = \hat{a} \frac{\sum_{i=1}^{n} \sum_{j=1}^{m} \Delta t_{i,j}}{\sum_{i=1}^{n} \sum_{j=1}^{m} \Delta x_{i,j}}
+$$
+
+
+\subsubsection{Méthode des moments} \label{estimateurs:gamma:moments}
+Comme pour les processus de Wiener, on obtient des estimateurs de $a$ et $b$ en notant : $$D_1 = \sum_{j =1}^{n}\Delta t_{i,j}, \quad D_2 = \sum_{j =1}^{n}(\Delta t_{i,j})^2, \quad S_1 = \sum_{j =1}^{n}\Delta X_{i,j}, \quad S_2 = \sum_{j =1}^{n}\Delta X_{i,j}$$
+Et en écrivant $\hat \mu = \hat{ab} = \frac{S_1}{D_1}$, on obtient : $$
+\hat{b} = \frac{S_2 - \hat{\mu}^2D_2}{\hat{\mu}D_1}, \quad \hat{a} = \frac{\hat{\mu}}{\hat{b}}
+$$
+
+\subsection{Biais sur les estimateurs}
+Afin de valider nos estimations et vérifier la présence ou non de biais, nous avons développé un programme informatique visant à calculer la moyenne empirique d'un grand nombre d'estimations pour un même paramètre connu et fixé. Nos observations convergent bien vers la valeur fixée, ce qui valide la non-présence de biais.
+
+\section{Application sur nos jeux de données} \label{application}
+\subsection{Application Shiny}
+Dans le cadre de ce projet, nous avons développé une application \textit{Shiny} dans R, où nous pouvons modéliser non seulement nos données, mais aussi un ou plusieurs processus de Wiener et Gamma pour des paramètres quelconques, calculer la date moyenne de défaillance pour ce processus. Nous pouvons tout de même modifier le choix de la répartition des dates. Un aperçu de cette application peut être visualisé dans le dossier Shiny de notre répertoire.
+\subsection{LASERS} \label{application:lasers}
+\subsubsection{Données de dégradation} \label{application:lasers:degradation}
+La dégradation strictement croissante nous invite à chosir la modélisation par un processus Gamma homogène, même si la modélisation de Wiener reste possible.
+
+Dans le cas du processus Gamma homogène, en calculant ses paramètres $a$ et $b$ on obtient :
+\begin{itemize}
+	\item \textbf{Méthode du maximum de vraisemblance :} $\hat{a} \approx 0.0287, \hat{b} \approx 14.1.$
+	\item  \textbf{Méthode des moments :} $\hat{a} \approx 0.0259, \hat{b} \approx 12.7.$
+\end{itemize}
+
+On superpose les processus reglés avec les paramètres estimés précédemment, avec les données réelles :
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{gamma.png}
+		\caption{Processus Gamma}
+		\label{fig:simu1}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{wiener_lasers.png}
+		\caption{Processus de Wiener}
+		\label{fig:simu2}
+	\end{subfigure}
+	\caption{Comparaison des deux processus pour les données des LASERS}
+	\label{fig:simu_comparaison}
+\end{figure}
+
+
+
+
+
+Avec un processus de Wiener, nous obtenons comme paramètres $\mu$ et $\sigma$ :
+\begin{itemize}
+	\item \textbf{Méthode du maximum de vraisemblance :} $\hat{\mu} \approx 0.00204, \hat{\sigma} \approx 0.0123.$
+	\item  \textbf{Méthode des moments :} $\hat{\mu} \approx 0.00192, \hat{\sigma} \approx 0.00103.$
+\end{itemize}
+
+\subsubsection{Date de défaillance} \label{application:lasers:defaillance}
+En se référant à \cite{KMP}, la date de défaillance pour un seuil fixé $h$, $\tau_h$, suit la loi : $$
+f_{\tau_h}(t)= a\int_h^{+\infty}(\log(u)-\psi_0(at))f_{at,1}(u)du,
+$$ 
+ou encore, en simplifiant cette expression :
+$$
+f_{\tau_h}(t) = \frac{at}{\Gamma(at)}\bigl(\int_{h}^{+\infty}\{\log(x)-\psi_0(at)\}x^{at-1}e^{-x}dx\bigr)
+$$
+où $\psi_0 : t\longmapsto \frac{\Gamma'(t)}{\Gamma(t)}$ est la \textit{fonction digamma}
+
+Lors du calcul de la densité, nous avons rencontré des problèmes dans la simulation que nous n'avons pas pu résoudre: les valeurs de l'intégrale renvoyaient des NaN.
+
+\subsection{Semi-conducteurs} \label{application:semicond}
+\subsubsection{Données de dégradation} \label{application:semicond:degradation}
+La non monotonie observée à partir du jeu de données nous invite à modéliser cette dégradation avec un processus de Wiener, en effet, la présence d'incréments strictement négatifs élimine la possibilité d'un processus Gamma.
+L'estimation des paramètres $\mu$ et $\sigma$ nous donne :
+
+\begin{itemize}
+	\item \textbf{Méthode du maximum de vraisemblance} : $\hat{\mu} \approx 0.000383,  \hat{\sigma} \approx 0.0210.$
+	\item \textbf{Méthode des moments} : $\hat{\mu} \approx 0.000980,  \hat{\sigma} \approx 0.0103.$
+\end{itemize}
+
+Comme pour les LASERS, on obtient avec la superposition des données et du modèle :
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.6 \textwidth]{wiener.png}
+	\caption{Données estimées et simulées pour les semi-conducteurs}
+\end{figure}
+
+Les courbes des simulations et des données réelles étant très proches, notre modèle semble être valable, même si la simulation avec les paramètres de la méthode par maximum de vraisemblance correspond plus à l'évolution réelle.
+
+\subsubsection{Date de défaillance} \label{application:semicond:defaillance}
+D'après \cite{KMP}, la date de défaillance $T$ pour un seuil $h$ donné, suit une loi inverse Gaussienne de densité :$$
+f_T(t) = \frac{h}{\sqrt{2 \pi \sigma^2 t^3}} \cdot e^{-\frac{(h-\mu t)^2}{2 \sigma^2 t}}
+$$
+On considèrera la date de défaillance $\tau_i$ comme la première date $t_{i,j}$ du processus $i$ où $x_{i,j}>h$.
+
+On récupère les $\tau_i$ et on vérifie avec un test $\chi^2$ si les données correspondent à des échantillons de la loi citée précédemment.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5 \textwidth]{dates_seuil.png}
+	\caption{Vérification d'une distribution inverse gaussienne pour les dates de défaillance}
+\end{figure}
+
+\section{Approfondissements} \label{approfondissements}
+\subsection{Modélisation d'un processus de Wiener à partir de la définition}
+Nous nous sommes intéressés dans le cadre de ce projet à la modélisation directe d'un processus de Wiener à partir de la définition avec l'intervention des \textit{mouvements Browniens}, modélisés par un algorithme de marche aléatoire. Une visualisation de cette modélisation peut être faite à l'aide de notre application Shiny.
+
+\subsection{Maintenance imparfaite} \label{approfondissements:imparfaite}
+On considère des réductions partielles périodiques et prévues de la dégradation pour simplifier notre étude, même si en réalité celles-ci ne sont pas nécésseraiment périodiques.
+
+Pour le modèle de Wiener, l'expression de la variable aléatoire $W_t$ devient : $$
+\forall t \geq 0, \quad W_t = \mu t + \sigma B_t + M_t,
+$$
+où $M_t$ est la variable aléatoire modélisant les maintenances accumulées au cours de la vie utile du système étudié.
+
+On a alors, pour des maintenances de période $\tau$ :
+\begin{itemize}
+	\item Les maintenances sont partielles : $\forall t > 0, W_t >0$,
+	\item La variable aléatoire $M_t$ vérifie : $M_t = -\alpha \sum_{i =1}^{n}W_{\tau_i}$ où $n$ est tel que $n\tau \leq \tau_h$, et $\alpha$ est un coefficient de maintenance, égal à $\frac{1}{3}$ dans nos simulations, assurant la cohérence dans nos observations.
+\end{itemize}
+
+Ces maintenances imparfaites réduisent partiellement la dégradation de notre objet et ont pour effet de repousser le temps de défaillance.
+
+Notre but ici est d'optimiser ces maintenances ; on cherche la période $\tau$ telle que :
+$$
+C(\tau)=\min\frac{\text{Coût total}}{\text{Temps total}}
+$$
+
+On observe avec nos simulations, pour un dispositif quelconque, tel qu'un \textit{smartphone} (voir figure \ref{figure:maintenance}).
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{maintenance.png}
+		\caption{Modélisation de la maintenance imparfaite}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{periode_optimale.png}
+		\caption{Calcul période optimale en faisant varier $\frac{\text{Prix maintenance}}{\text{Prix appareil}}$}
+	\end{subfigure}
+	\caption{Simulations de la maintenance imparfaite}
+	\label{figure:maintenance}
+\end{figure}
+
+Pour chaque prix de maintenance compris entre 0 et le prix de remplacement de l'appareil, on calcule la période de maintenance optimale vis-à-vis du rapport $\frac{\text{Coût total}}{\text{Temps total}}$.
+
+On trace donc cette période en fonction du rapport $\frac{\text{Prix maintenance}}{\text{Prix appareil}}$ pour ne pas se reposer sur le choix arbitraire de remplacer un nouvel appareil. On aurait pu tenter de trouver une solution non arbitraire pour d'autres données telles que le seuil minimal, entre autres.
+
+\subsection{Dégradation initiale} \label{approfondissements:initiale}
+Précédemment, on a considéré que $x_0 \neq 0$ :
+Nous avons essayé de modéliser un processus avec $x_0$ non nul, mais les formules deviennent rapidement très compliquées : dans notre cas, nous avons choisi de modifier les données fournies pour vérifier la condition $x_0 = 0 = t_0$. Cette hypothèse semblait correcte pour nos données, les différences entre deux dates de mesure et les incréments correspondants étaient du même ordre qu'entre 0 et la première donnée.
+
+\subsection{Processus non homogènes} \label{approfondissements:nonhomo}
+En analysant les données empiriques, on remarque notamment dans le cas des semi-conducteurs, que la pente $\mu$ augmente avec le temps. Autrement dit, l'espérance de cette dégradation n'est pas une droite, mais une fonction moyenne $m(t)$.
+
+Dans ce cadre, le modèle de Wiener devient : $$
+W_t = m(t) + \sigma B_t,
+$$
+où $m(t) = \int_{0}^{t} \mu(u)du$.
+
+Ainsi, les accroissements vérifient dès lors : $$
+\forall (t, s) \in \mathbb{R}_+^2, \quad W_t - W_s \sim \mathcal{N}(m(t)-m(s),\sigma^2 (t-s)).
+$$
+On peut choisir $m(t) = \alpha t + \beta t^2$, $m(t) = \alpha t^\gamma$ ou $m(t) = \alpha (e^{\beta t} -1)$
+
+
+Pour les processus gamma, on a donné la définition de ces processus Gamma non homogènes précédemment (voir \ref{rappels:gamma}).
+
+En raison de contraintes temporelles, nous nous sommes restreints à l'approche théorique.
+
+\subsubsection{Pistes d'amélioration}
+Parmi nos fonctions, nous avons remarqué dans certains cas un manque d'efficacité dû à l'application naïve d'un algorithme. En particulier, le grand nombre de simulations nécessaire à la précision de nos estimations nécessite une vectorisation efficace en R qui n'a pas toujours été appliquée.
+
+En outre, nous avons omis l'utilisation de \textit{set.seed} et n'avons pas pu observer si la différence dans le résultat était négligeable ou pas.
+
+\section{Conclusions}\label{conclusions}
+
+Dans ce projet, nous avons étudié la modélisation aléatoire de phénomènes de dégradation à partir de données issues de systèmes industriels réels, en nous appuyant sur deux classes majeures de processus stochastiques : les processus de Wiener (\ref{rappels:wiener}) et les processus Gamma (\ref{rappels:gamma}). Ces modèles permettent de dépasser une approche purement basée sur les temps de défaillance, en exploitant l’information contenue dans l’évolution temporelle continue des indicateurs de dégradation.
+
+L’analyse des deux jeux de données fournis a mis en évidence l’importance du choix du modèle en fonction de la nature physique du phénomène observé. Les données relatives aux lasers, caractérisées par une dégradation strictement croissante, se prêtent naturellement à une modélisation par un processus Gamma homogène (\ref{application:lasers}), tandis que la variabilité non monotone observée pour les semi-conducteurs justifie l’utilisation d’un processus de Wiener avec dérive (\ref{application:semicond}). Dans les deux cas, les méthodes d’estimation par maximum de vraisemblance et par moments ont conduit à des paramètres cohérents, avec des résultats numériquement proches, ce qui renforce la crédibilité des ajustements effectués.
+
+À partir des modèles calibrés, nous avons pu étudier la loi de l’instant de franchissement d’un seuil critique, interprété comme la date de défaillance du système (\ref{application:lasers:defaillance} et \ref{application:semicond:defaillance}). Cette approche probabiliste permet non seulement d’obtenir une estimation ponctuelle du temps de défaillance, mais aussi d’en quantifier l’incertitude, élément essentiel dans une perspective de maintenance préventive. Les résultats obtenus sont en accord avec les expressions théoriques issues de la littérature, notamment pour le cas du processus de Wiener où la loi inverse gaussienne intervient naturellement.
+
+Enfin, les pistes d’approfondissement abordées - telles que la prise en compte de maintenances imparfaites (\ref{approfondissements:imparfaite}), de dégradations initiales non nulles ou encore de processus non homogènes (\ref{approfondissements:nonhomo}) - montrent que les modèles étudiés peuvent être enrichis afin de mieux représenter la complexité des systèmes réels. Ces extensions, bien que plus coûteuses en termes de modélisation et d’estimation, constituent des perspectives pertinentes pour améliorer la précision des prévisions et optimiser les stratégies de maintenance, même si elles ignorent l'existence de l'obsolescence programmée qui a pour effet de borner la date maximale d'utilisation.
+
+Ainsi, ce travail illustre l’intérêt et la flexibilité des modèles de dégradation stochastiques pour l’analyse de données industrielles. Il met également en lumière les limites inhérentes aux hypothèses de stationnarité et d’homogénéité, invitant à une utilisation raisonnée et critique de ces modèles, en lien étroit avec la compréhension physique des phénomènes étudiés.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Bibiliography.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{agsm}  
+\clearpage
+\phantomsection %add a phantom section for the hyperreference linkg
+\addcontentsline{toc}{section}{Bibliographie} %add a chapter to the TOC
+\bibliography{Ref}   %must have a file named Ref.bib
+
+\end{document}
